@@ -3,217 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập - Bảo Vệ Cơ Thể</title>
+    <title>Bảo Vệ Cơ Thể - Đăng Nhập</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        .mic-active {
-            animation: pulse 1.5s infinite;
-            background-color: #ef4444 !important;
-        }
-    </style>
+    <script src="db.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-
-    <div class="max-w-xl w-full bg-white rounded-3xl shadow-xl p-8 relative overflow-hidden">
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-lg p-6 flex flex-col justify-between">
         
-        <!-- Progress bar step 3 -->
-        <div class="w-full bg-slate-200 h-2 rounded-full mb-8">
-            <div class="bg-blue-600 h-2 rounded-full w-full"></div>
+        <!-- Onboarding Header -->
+        <div class="text-center space-y-2">
+            <span class="bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Bước 3: Xác Thực</span>
+            <h1 class="text-2xl font-black text-indigo-600 mt-2">BẮT ĐẦU TRẢI NGHIỆM</h1>
+            <p class="text-xs text-gray-500">Đăng nhập tài khoản Google để đồng bộ dữ liệu hoặc trải nghiệm chế độ Ẩn Danh ngay.</p>
         </div>
 
-        <div class="text-center mb-8">
-            <span class="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">Bước 3 / 3</span>
-            <h1 class="text-2xl font-black text-slate-800 mt-2">BƯỚC CUỐI: ĐĂNG NHẬP</h1>
-            <p class="text-sm text-slate-500 mt-1">Lưu trữ dữ liệu tiến trình chơi game hoặc tham gia ẩn danh ngay lập tức.</p>
-        </div>
-
-        <!-- Auth Actions Box -->
-        <div class="space-y-4 my-6">
-            <!-- Google Login simulation -->
-            <button onclick="simulateGoogleLogin()" class="w-full flex items-center justify-center space-x-3 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 px-6 rounded-2xl transition shadow-md">
-                <i class="fa-brands fa-google text-lg"></i>
-                <span>Kết nối Tài khoản Google</span>
+        <!-- Login Controls -->
+        <div class="space-y-3 my-6">
+            <!-- Mock Google Login Button -->
+            <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center space-x-3 border-2 border-gray-200 hover:border-indigo-500 py-3 rounded-xl transition-all">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+                <span class="text-sm font-bold text-gray-700">Tiếp tục với Google</span>
             </button>
 
-            <!-- Anonymous Option -->
-            <button onclick="continueAnonymous()" class="w-full flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 px-6 rounded-2xl transition border">
-                <i class="fa-solid fa-user-secret"></i>
-                <span>Sử dụng Chế độ Ẩn Danh (Vào chat ngay)</span>
+            <!-- Anonymous Login Button -->
+            <button onclick="handleAnonymousLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-bold text-sm shadow transition-all">
+                Chế độ Ẩn Danh (Vào trang chủ)
             </button>
         </div>
 
-        <!-- Audio AI Assist Panel -->
-        <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 flex flex-col items-center text-center mb-6">
-            <p class="text-xs text-blue-800 font-medium mb-2 flex items-center space-x-1">
-                <span>🎙️ Bạn chưa biết chọn cách nào? Click micro trao đổi với AI</span>
-            </p>
+        <!-- Chat / Mic Support Area -->
+        <div class="border rounded-xl p-4 bg-gray-50 space-y-2">
             <div class="flex items-center space-x-3">
-                <button id="micBtn" onclick="toggleSpeech()" class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow">
-                    <i id="micIcon" class="fa-solid fa-microphone text-sm"></i>
+                <button onclick="triggerMic()" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow animate-pulse">
+                    🎤
                 </button>
-                <div id="aiResponseBox" class="text-left text-xs bg-white p-2.5 rounded-xl border max-w-xs hidden">
-                    <!-- AI response will go here -->
+                <div class="text-left">
+                    <p class="text-xs font-bold text-gray-700">Trợ Lý AI Giọng Nói</p>
+                    <p class="text-[10px] text-gray-500">Bạn cần tư vấn trước khi đăng nhập? Hãy chạm micro.</p>
                 </div>
             </div>
-            <p id="speechStatus" class="text-[10px] text-blue-500 mt-1 italic hidden">Đang nghe...</p>
+            <div id="ai-response-box" class="hidden text-xs bg-white p-2.5 rounded border border-gray-100 text-gray-600"></div>
         </div>
 
-        <!-- Bottom Link Navigation -->
-        <div class="flex justify-between items-center pt-4 border-t">
-            <button onclick="goBack()" class="text-slate-500 hover:text-slate-700 font-bold text-sm">Quay lại</button>
-        </div>
+        <p class="text-[11px] text-gray-400 text-center mt-4">Khi đăng nhập, bạn đồng ý với các Điều khoản bảo mật y tế số của chúng tôi.</p>
     </div>
 
-    <!-- Script management -->
     <script>
-        const dbName = "BaoVeCoTheDB";
-        let db;
+        let userInstance = null;
 
-        function initDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open(dbName, 1);
-                request.onsuccess = (e) => {
-                    db = e.target.result;
-                    resolve(db);
-                };
-            });
+        async function initUserContext() {
+            userInstance = await getOrCreateUser();
         }
+        initUserContext();
 
-        function generateUUID() {
-            const timestamp = Date.now();
-            const randomStr = Math.random().toString(36).substring(2, 10);
-            return `bvct-${randomStr}-${timestamp}`;
-        }
-
-        async function getOrCreateUUID() {
-            let uuid = localStorage.getItem("user_uuid");
-            if (!uuid) {
-                uuid = generateUUID();
-                localStorage.setItem("user_uuid", uuid);
-
-                const ref = new URLSearchParams(window.location.search).get('ref') || localStorage.getItem("referral_code");
-
-                const tx = db.transaction("users", "readwrite");
-                tx.objectStore("users").put({
-                    uuid: uuid,
-                    createdAt: new Date().toISOString(),
-                    refBy: ref || null
-                });
-            }
-            return uuid;
-        }
-
-        async function simulateGoogleLogin() {
-            const uuid = await getOrCreateUUID();
+        async function triggerMic() {
+            if (!userInstance) await initUserContext();
             
-            // Simulating Google OAuth return details
-            const googleEmail = "user.healthy@gmail.com";
-            const googleAvatar = "https://api.dicebear.com/7.x/adventurer/svg?seed=GoogleUser";
+            const responseBox = document.getElementById('ai-response-box');
+            responseBox.classList.remove('hidden');
+            responseBox.innerHTML = "<em>Đang lắng nghe...</em>";
 
-            // Retrieve current user and update details
-            const tx = db.transaction("users", "readwrite");
-            const store = tx.objectStore("users");
-            
-            const request = store.get(uuid);
-            request.onsuccess = async () => {
-                const userObj = request.result || { uuid: uuid, createdAt: new Date().toISOString() };
-                userObj.email = googleEmail;
-                userObj.avatar = googleAvatar;
-                
-                await store.put(userObj);
-                alert("Đăng nhập bằng tài khoản Google thành công! Đang chuyển hướng đến Game Portal...");
-                window.location.href = "game-portal.html";
-            };
-        }
-
-        async function continueAnonymous() {
-            await getOrCreateUUID();
-            alert("Chế độ ẩn danh được kích hoạt! Vào trò chuyện cùng AI.");
-            window.location.href = "index.html";
-        }
-
-        function goBack() {
-            const ref = new URLSearchParams(window.location.search).get('ref') || "";
-            window.location.href = `DonationHeroPanel.html${ref ? '?ref=' + ref : ''}`;
-        }
-
-        // Voice recognition
-        let recognition;
-        let isListening = false;
-
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'vi-VN';
-
-            recognition.onstart = () => {
-                isListening = true;
-                document.getElementById("micBtn").classList.add("mic-active");
-                document.getElementById("speechStatus").classList.remove("hidden");
-            };
-
-            recognition.onresult = async (event) => {
-                const speechResult = event.results[0][0].transcript;
-                const uuid = await getOrCreateUUID();
-
-                const responseBox = document.getElementById("aiResponseBox");
-                responseBox.classList.remove("hidden");
-                responseBox.innerHTML = `<strong>Bạn:</strong> ${speechResult}`;
-
-                let aiText = "Bạn nên chọn ẩn danh để trải nghiệm nhanh, hoặc đăng nhập Google để đồng bộ lưu dữ liệu khi chơi Game nhé!";
-                if (speechResult.toLowerCase().includes("google")) {
-                    aiText = "Nhấn nút 'Kết nối Tài khoản Google' màu đỏ phía trên để bảo lưu quá trình chơi game bảo vệ cơ thể.";
+            await startSpeechRecognition(
+                userInstance.uuid,
+                (speech) => {
+                    responseBox.innerHTML = `🗣️ <strong>Bạn:</strong> ${speech}`;
+                },
+                (aiResponse) => {
+                    responseBox.innerHTML += `<br>🤖 <strong>AI:</strong> ${aiResponse}`;
                 }
-
-                responseBox.innerHTML += `<br><strong class="text-blue-600">AI:</strong> ${aiText}`;
-
-                const tx = db.transaction("chats", "readwrite");
-                const store = tx.objectStore("chats");
-                await store.add({ uuid, sender: "user", text: speechResult, timestamp: new Date().toISOString() });
-                await store.add({ uuid, sender: "bot", text: aiText, timestamp: new Date().toISOString() });
-
-                speakText(aiText);
-            };
-
-            recognition.onerror = () => { stopListeningState(); };
-            recognition.onend = () => { stopListeningState(); };
+            );
         }
 
-        function toggleSpeech() {
-            if (!recognition) {
-                alert("Nhận giọng nói không hỗ trợ trên trình duyệt này!");
-                return;
-            }
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
+        async function handleAnonymousLogin() {
+            if (!userInstance) await initUserContext();
+            // Just redirect to index.html with existing/new UUID setup
+            window.location.href = 'index.html';
         }
 
-        function stopListeningState() {
-            isListening = false;
-            document.getElementById("micBtn").classList.remove("mic-active");
-            document.getElementById("speechStatus").classList.add("hidden");
-        }
+        async function handleGoogleLogin() {
+            if (!userInstance) await initUserContext();
 
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'vi-VN';
-                window.speechSynthesis.speak(utterance);
-            }
-        }
+            // Simulate Google OAuth response
+            const googleMockEmail = "user." + Math.floor(Math.random() * 1000) + "@gmail.com";
+            const googleMockAvatar = "https://api.dicebear.com/7.x/adventurer/svg?seed=" + googleMockEmail;
 
-        window.onload = async () => {
-            await initDB();
-        };
+            // Save details to IndexedDB under the UUID primary key
+            userInstance.email = googleMockEmail;
+            userInstance.avatar = googleMockAvatar;
+            await saveUser(userInstance);
+
+            alert("Đăng nhập bằng Google thành công!\nChào mừng: " + googleMockEmail);
+            
+            // Redirect to Game Portal
+            window.location.href = 'portal-index.html';
+        }
     </script>
 </body>
 </html>
