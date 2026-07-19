@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Portal - Bảo Vệ Cơ Thể</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="db.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="max-w-md mx-auto min-h-screen flex flex-col justify-between bg-gray-800 shadow-xl relative">
+        
+        <!-- Portal Header -->
+        <header class="p-4 bg-gray-950 flex justify-between items-center border-b border-gray-800">
+            <div>
+                <h1 class="text-md font-black text-green-400">🎮 AI GAME PORTAL</h1>
+                <p class="text-[10px] text-gray-400">Trò chơi rèn luyện nhận thức & bảo vệ sức khỏe</p>
+            </div>
+            <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+                Trang Chủ 🏠
+            </a>
+        </header>
+
+        <!-- Portal Body -->
+        <main class="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div class="bg-gray-750 p-4 rounded-xl border border-gray-700">
+                <h2 class="text-xs font-bold text-green-400 uppercase tracking-widest mb-1">Thử Thách Tuần Này</h2>
+                <p class="text-sm font-semibold text-gray-200">Tìm kiếm tế bào hỏng & lập kế hoạch dinh dưỡng y tế.</p>
+            </div>
+
+            <!-- Games Grid -->
+            <div class="space-y-3" id="games-container">
+                <!-- Game 1 -->
+                <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex items-center justify-between hover:border-green-500 transition-all">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🩸</span>
+                        <div>
+                            <h3 class="text-xs font-bold text-white">Đại Chiến Bạch Cầu</h3>
+                            <p class="text-[10px] text-gray-500">Giúp hệ miễn dịch tiêu diệt vi khuẩn gây hại.</p>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('Đại Chiến Bạch Cầu')" class="bg-green-500 hover:bg-green-600 text-gray-950 text-xs px-3 py-1 rounded font-black">CHƠI</button>
+                </div>
+
+                <!-- Game 2 -->
+                <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex items-center justify-between hover:border-green-500 transition-all">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🍏</span>
+                        <div>
+                            <h3 class="text-xs font-bold text-white">Dinh Dưỡng Tế Bào</h3>
+                            <p class="text-[10px] text-gray-500">Phân bổ khoáng chất & Vitamin vào cơ quan đích.</p>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('Dinh Dưỡng Tế Bào')" class="bg-green-500 hover:bg-green-600 text-gray-950 text-xs px-3 py-1 rounded font-black">CHƠI</button>
+                </div>
+
+                <!-- Game 3 -->
+                <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex items-center justify-between hover:border-green-500 transition-all">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">🧠</span>
+                        <div>
+                            <h3 class="text-xs font-bold text-white">Gỡ Rối Neuron Thần Kinh</h3>
+                            <p class="text-[10px] text-gray-500">Phản xạ nhanh giúp liên kết tế bào não.</p>
+                        </div>
+                    </div>
+                    <button onclick="launchGame('Gỡ Rối Neuron Thần Kinh')" class="bg-green-500 hover:bg-green-600 text-gray-950 text-xs px-3 py-1 rounded font-black">CHƠI</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Active User HUD -->
+        <footer class="p-3 bg-gray-950 border-t border-gray-800 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img id="hud-avatar" class="w-8 h-8 rounded-full border border-green-400" src="https://via.placeholder.com/32" alt="Avatar">
+                <div>
+                    <p class="text-[10px] text-gray-400" id="hud-user">Player...</p>
+                    <p class="text-[9px] text-green-400 font-bold">Xác minh y tế hoàn tất ✔️</p>
+                </div>
+            </div>
+            <div class="text-[9px] text-right text-gray-500">
+                Ver 1.0.4-Beta
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            const db = await initDB();
+            const transaction = db.transaction(['users'], 'readonly');
+            const store = transaction.objectStore('users');
+            const request = store.openCursor();
+            
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (!cursor) {
+                    window.location.href = 'ChooseUserRolePanel.html';
+                } else {
+                    const user = cursor.value;
+                    document.getElementById('hud-avatar').src = user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + user.uuid;
+                    document.getElementById('hud-user').innerText = user.email ? user.email.split('@')[0] : 'Guest-' + user.uuid.substring(2, 6);
+                }
+            };
+        });
+
+        function launchGame(gameName) {
+            alert(`Tính năng đang tải: Game "${gameName}" chuẩn bị khởi chạy!`);
+        }
+    </script>
+</body>
+</html>

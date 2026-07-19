@@ -1,28 +1,151 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="hero-title">Bảo Vệ Cơ Thể</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảo Vệ Cơ Thể - Trang Chủ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="db.js"></script>
 </head>
-<body>
-  <div class="container">
-    <header>
-      <h1 data-i18n="hero-title">Bảo Vệ Cơ Thể</h1>
-      <p data-i18n="hero-subtitle">Học cách tự bảo vệ bản thân thông qua các trò chơi tương tác bổ ích.</p>
-    </header>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-md mx-auto min-h-screen flex flex-col justify-between bg-white shadow-lg relative pb-20">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-4 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center space-x-2">
+                <img id="user-avatar" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full border-2 border-white" alt="Avatar">
+                <div>
+                    <h1 class="text-sm font-bold" id="user-display">Bác Sĩ Trí Tuệ Nhân Tạo</h1>
+                    <p class="text-xs text-blue-200" id="user-email">Đang tải...</p>
+                </div>
+            </div>
+            <a href="portal-index.html" class="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow">
+                Game Portal 🎮
+            </a>
+        </header>
 
-    <main class="menu">
-      <a href="game.html" class="btn btn-primary" data-i18n="btn-start">Bắt Đầu Ngay</a>
-      <button class="btn btn-secondary" data-i18n="btn-instructions">Xem Hướng Dẫn</button>
-    </main>
+        <!-- Main Dashboard: Chat History & Affiliate Section -->
+        <main class="flex-1 p-4 space-y-4 overflow-y-auto" id="main-content">
+            <!-- Affiliate Link Box -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                <h3 class="text-sm font-bold text-blue-800 mb-1">🎁 Nhận Quà Giới Thiệu (Affiliate)</h3>
+                <p class="text-xs text-gray-600 mb-2">Chia sẻ link dưới đây để mời bạn bè tham gia cùng bảo vệ cơ thể!</p>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="affiliate-link" class="bg-white border text-xs p-2 rounded flex-1 focus:outline-none" readonly>
+                    <button onclick="copyAffiliateLink()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded font-semibold hover:bg-blue-700">Copy</button>
+                </div>
+            </div>
 
-    <footer>
-      <p data-i18n="footer-text">© 2024 Dự án Giáo dục Bảo Vệ Cơ Thể.</p>
-    </footer>
-  </div>
+            <!-- Chat History Header -->
+            <div>
+                <h2 class="text-md font-bold text-gray-700 border-b pb-2 mb-3">Lịch sử tư vấn sức khỏe</h2>
+                <div id="chat-history" class="space-y-3">
+                    <!-- Dynamic chats go here -->
+                </div>
+            </div>
+        </main>
 
-  <script src="js/i18n.js"></script>
+        <!-- Dynamic Mic Button and Chat input -->
+        <div class="absolute bottom-4 left-4 right-4 bg-white p-3 border rounded-xl shadow-lg flex items-center space-x-2">
+            <button onclick="micAction()" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-md focus:outline-none animate-pulse">
+                🎤
+            </button>
+            <div class="flex-1">
+                <p class="text-xs text-gray-400 font-medium">Nhấn vào Micro để nói chuyện với AI Assistant...</p>
+                <p id="chat-status" class="text-xs text-blue-600 font-bold hidden">Đang nghe...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Check UUID inside DB
+            const db = await initDB();
+            const transaction = db.transaction(['users'], 'readonly');
+            const store = transaction.objectStore('users');
+            const request = store.openCursor();
+            
+            request.onsuccess = async (event) => {
+                const cursor = event.target.result;
+                if (!cursor) {
+                    // No UUID exists -> Redirect to Onboarding Flow
+                    window.location.href = 'ChooseUserRolePanel.html';
+                } else {
+                    currentUser = cursor.value;
+                    setupDashboard();
+                }
+            };
+        });
+
+        function setupDashboard() {
+            // Set User Data
+            document.getElementById('user-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + currentUser.uuid;
+            document.getElementById('user-display').innerText = currentUser.email ? 'Thành Viên' : 'Người dùng Ẩn danh';
+            document.getElementById('user-email').innerText = currentUser.email || 'UUID: ' + currentUser.uuid.substring(0, 15) + '...';
+
+            // Generate Affiliate Link
+            const affLink = `${window.location.origin}${window.location.pathname.replace('index.html', '')}ChooseUserRolePanel.html?ref=${currentUser.uuid}`;
+            document.getElementById('affiliate-link').value = affLink;
+
+            // Load Chat History
+            loadChatHistory();
+        }
+
+        async function loadChatHistory() {
+            const chatBox = document.getElementById('chat-history');
+            chatBox.innerHTML = '';
+            const chats = await getChats(currentUser.uuid);
+
+            if (chats.length === 0) {
+                chatBox.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">Chưa có lịch sử trò chuyện. Hãy nhấn nút micro phía dưới để bắt đầu.</p>`;
+                return;
+            }
+
+            chats.forEach(chat => {
+                const isUser = chat.sender === 'user';
+                const container = document.createElement('div');
+                container.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-[80%] rounded-lg p-3 text-xs shadow-sm ${
+                    isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                }`;
+                bubble.innerText = chat.message;
+
+                container.appendChild(bubble);
+                chatBox.appendChild(container);
+            });
+            
+            // Scroll to bottom
+            const mainContent = document.getElementById('main-content');
+            mainContent.scrollTop = mainContent.scrollHeight;
+        }
+
+        async function micAction() {
+            const status = document.getElementById('chat-status');
+            status.classList.remove('hidden');
+            
+            await startSpeechRecognition(currentUser.uuid, 
+                (userText) => {
+                    status.innerText = "Đang nhận dạng: " + userText;
+                    loadChatHistory();
+                }, 
+                (aiText) => {
+                    status.innerText = "Đã nhận câu trả lời.";
+                    setTimeout(() => status.classList.add('hidden'), 2000);
+                    loadChatHistory();
+                }
+            );
+        }
+
+        function copyAffiliateLink() {
+            const copyText = document.getElementById("affiliate-link");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("Đã sao chép link Affiliate!");
+        }
+    </script>
 </body>
 </html>

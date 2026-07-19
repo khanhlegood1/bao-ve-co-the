@@ -3,222 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chọn Vai Trò Của Bạn - Bảo Vệ Cơ Thể</title>
+    <title>Bảo Vệ Cơ Thể - Chọn Vai Trò</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        .mic-active {
-            animation: pulse 1.5s infinite;
-            background-color: #ef4444 !important;
-        }
-    </style>
+    <script src="db.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-
-    <div class="max-w-xl w-full bg-white rounded-3xl shadow-xl p-8 relative overflow-hidden">
+<body class="bg-blue-50 text-gray-800">
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-lg p-6 flex flex-col justify-between">
         
-        <!-- Progress bar step 1 -->
-        <div class="w-full bg-slate-200 h-2 rounded-full mb-8">
-            <div class="bg-blue-600 h-2 rounded-full w-1/3"></div>
+        <!-- Onboarding Header -->
+        <div class="text-center space-y-2">
+            <span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Bước 1: Vai Trò</span>
+            <h1 class="text-2xl font-black text-blue-600 mt-2">BẠN LÀ AI?</h1>
+            <p class="text-xs text-gray-500">Hãy chọn đúng vai trò của bạn để AI tối ưu hóa lộ trình chăm sóc cơ thể.</p>
         </div>
 
-        <div class="text-center mb-6">
-            <span class="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">Bước 1 / 3</span>
-            <h1 class="text-2xl font-black text-slate-800 mt-2">CHỌN VAI TRÒ CỦA BẠN</h1>
-            <p class="text-sm text-slate-500 mt-1">Vai trò này giúp AI cá nhân hóa cách trò chuyện & tư vấn dành riêng cho bạn</p>
+        <!-- Role Selection -->
+        <div class="space-y-4 my-6">
+            <label class="flex items-center p-4 border-2 border-blue-500 rounded-xl bg-blue-50/50 cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="role" value="user" checked class="w-5 h-5 text-blue-600 mr-3">
+                <div>
+                    <p class="text-sm font-bold text-gray-800">Người tìm kiếm sức khỏe</p>
+                    <p class="text-xs text-gray-500">Muốn chăm sóc bản thân, phòng tránh bệnh lý.</p>
+                </div>
+            </label>
+
+            <label class="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="role" value="doctor" class="w-5 h-5 text-blue-600 mr-3">
+                <div>
+                    <p class="text-sm font-bold text-gray-800">Chuyên gia / Bác sĩ</p>
+                    <p class="text-xs text-gray-500">Muốn đóng góp kiến thức và tư vấn cộng đồng.</p>
+                </div>
+            </label>
         </div>
 
-        <!-- Role options grid -->
-        <div class="grid grid-cols-2 gap-4 my-6">
-            <button onclick="selectRole('Trẻ em / Học sinh')" class="role-btn border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center text-center transition bg-white focus:outline-none">
-                <span class="text-4xl mb-2">🎒</span>
-                <span class="font-bold text-slate-700 text-sm">Học Sinh</span>
-            </button>
-            <button onclick="selectRole('Phụ huynh')" class="role-btn border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center text-center transition bg-white focus:outline-none">
-                <span class="text-4xl mb-2">👨‍👩-👦</span>
-                <span class="font-bold text-slate-700 text-sm">Phụ Huynh</span>
-            </button>
-            <button onclick="selectRole('Bác sĩ / Chuyên gia')" class="role-btn border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center text-center transition bg-white focus:outline-none">
-                <span class="text-4xl mb-2">🩺</span>
-                <span class="font-bold text-slate-700 text-sm">Bác sĩ</span>
-            </button>
-            <button onclick="selectRole('Người yêu khoa học')" class="role-btn border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center text-center transition bg-white focus:outline-none">
-                <span class="text-4xl mb-2">🔬</span>
-                <span class="font-bold text-slate-700 text-sm">Nghiên Cứu</span>
-            </button>
-        </div>
-
-        <!-- Audio AI Assist Panel -->
-        <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 flex flex-col items-center text-center mb-6">
-            <p class="text-xs text-blue-800 font-medium mb-2 flex items-center space-x-1">
-                <span>🎙️ Bạn cần trợ giúp chọn vai trò? Click micro nói chuyện với AI</span>
-            </p>
+        <!-- Chat / Mic Support Area -->
+        <div class="border rounded-xl p-4 bg-gray-50 space-y-2">
             <div class="flex items-center space-x-3">
-                <button id="micBtn" onclick="toggleSpeech()" class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow">
-                    <i id="micIcon" class="fa-solid fa-microphone text-sm"></i>
+                <button onclick="triggerMic()" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow animate-pulse">
+                    🎤
                 </button>
-                <div id="aiResponseBox" class="text-left text-xs bg-white p-2.5 rounded-xl border max-w-xs hidden">
-                    <!-- AI response will go here -->
+                <div class="text-left">
+                    <p class="text-xs font-bold text-gray-700">Trợ Lý AI Giọng Nói</p>
+                    <p class="text-[10px] text-gray-500">Chạm micro để hỏi AI ngay tại bước này.</p>
                 </div>
             </div>
-            <p id="speechStatus" class="text-[10px] text-blue-500 mt-1 italic hidden">Đang nghe...</p>
+            <div id="ai-response-box" class="hidden text-xs bg-white p-2.5 rounded border border-gray-100 text-gray-600"></div>
         </div>
 
-        <!-- Navigation bottom -->
-        <div class="flex justify-end pt-4 border-t">
-            <button id="nextBtn" onclick="goToNextStep()" disabled class="bg-slate-300 text-slate-500 px-6 py-3 rounded-xl font-bold cursor-not-allowed transition flex items-center space-x-2">
-                <span>Tiếp tục</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
+        <!-- Continue Button -->
+        <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold text-sm shadow transition-all mt-4">
+            Tiếp Tục ➜
+        </button>
     </div>
 
-    <!-- Script management -->
     <script>
-        const dbName = "BaoVeCoTheDB";
-        let db;
-        let selectedRole = "";
+        let userInstance = null;
 
-        // Init DB
-        function initDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open(dbName, 1);
-                request.onsuccess = (e) => {
-                    db = e.target.result;
-                    resolve(db);
-                };
-            });
+        async function initUserContext() {
+            userInstance = await getOrCreateUser();
         }
+        initUserContext();
 
-        // Generate UUID rule based on admin components
-        function generateUUID() {
-            const timestamp = Date.now();
-            const randomStr = Math.random().toString(36).substring(2, 10);
-            return `bvct-${randomStr}-${timestamp}`;
-        }
-
-        // Get/Create UUID & assign referral code
-        async function getOrCreateUUID() {
-            let uuid = localStorage.getItem("user_uuid");
-            if (!uuid) {
-                uuid = generateUUID();
-                localStorage.setItem("user_uuid", uuid);
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const ref = urlParams.get('ref') || localStorage.getItem("referral_code");
-
-                const newUser = {
-                    uuid: uuid,
-                    createdAt: new Date().toISOString(),
-                    refBy: ref || null
-                };
-
-                const tx = db.transaction("users", "readwrite");
-                tx.objectStore("users").put(newUser);
-            }
-            return uuid;
-        }
-
-        function selectRole(role) {
-            selectedRole = role;
-            document.querySelectorAll('.role-btn').forEach(btn => {
-                btn.classList.remove('border-blue-500', 'bg-blue-50');
-            });
-            event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
-
-            const nextBtn = document.getElementById("nextBtn");
-            nextBtn.removeAttribute("disabled");
-            nextBtn.classList.remove("bg-slate-300", "text-slate-500", "cursor-not-allowed");
-            nextBtn.classList.add("bg-blue-600", "text-white", "hover:bg-blue-700");
-        }
-
-        async function goToNextStep() {
-            await getOrCreateUUID();
-            // Save selected role to LocalStorage
-            localStorage.setItem("user_role", selectedRole);
+        async function triggerMic() {
+            if (!userInstance) await initUserContext();
             
-            const ref = new URLSearchParams(window.location.search).get('ref') || "";
-            window.location.href = `DonationHeroPanel.html${ref ? '?ref=' + ref : ''}`;
-        }
+            const responseBox = document.getElementById('ai-response-box');
+            responseBox.classList.remove('hidden');
+            responseBox.innerHTML = "<em>Đang lắng nghe...</em>";
 
-        // Interactive voice AI helper
-        let recognition;
-        let isListening = false;
-
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'vi-VN';
-
-            recognition.onstart = () => {
-                isListening = true;
-                document.getElementById("micBtn").classList.add("mic-active");
-                document.getElementById("speechStatus").classList.remove("hidden");
-            };
-
-            recognition.onresult = async (event) => {
-                const speechResult = event.results[0][0].transcript;
-                const uuid = await getOrCreateUUID();
-                
-                // Show speech
-                const responseBox = document.getElementById("aiResponseBox");
-                responseBox.classList.remove("hidden");
-                responseBox.innerHTML = `<strong>Bạn:</strong> ${speechResult}`;
-
-                // Formulate simulated response advising them
-                let aiText = "Tôi khuyên bạn chọn Học sinh nếu bạn muốn học vui hoặc Phụ huynh nếu bạn muốn tư vấn cho gia đình.";
-                if (speechResult.toLowerCase().includes("bác sĩ") || speechResult.toLowerCase().includes("y tá")) {
-                    aiText = "Tuyệt vời, vai trò Bác sĩ / Chuyên gia sẽ giúp chúng ta cùng thảo luận các thuật ngữ y học chuyên sâu hơn.";
+            await startSpeechRecognition(
+                userInstance.uuid,
+                (speech) => {
+                    responseBox.innerHTML = `🗣️ <strong>Bạn:</strong> ${speech}`;
+                },
+                (aiResponse) => {
+                    responseBox.innerHTML += `<br>🤖 <strong>AI:</strong> ${aiResponse}`;
                 }
-
-                responseBox.innerHTML += `<br><strong class="text-blue-600">AI:</strong> ${aiText}`;
-
-                // Save this talk to chats history
-                const tx = db.transaction("chats", "readwrite");
-                const store = tx.objectStore("chats");
-                await store.add({ uuid, sender: "user", text: speechResult, timestamp: new Date().toISOString() });
-                await store.add({ uuid, sender: "bot", text: aiText, timestamp: new Date().toISOString() });
-
-                speakText(aiText);
-            };
-
-            recognition.onerror = () => { stopListeningState(); };
-            recognition.onend = () => { stopListeningState(); };
+            );
         }
 
-        function toggleSpeech() {
-            if (!recognition) {
-                alert("Trình duyệt không hỗ trợ nhận dạng âm thanh.");
-                return;
-            }
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
-        }
-
-        function stopListeningState() {
-            isListening = false;
-            document.getElementById("micBtn").classList.remove("mic-active");
-            document.getElementById("speechStatus").classList.add("hidden");
-        }
-
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'vi-VN';
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        window.onload = async () => {
-            await initDB();
+        function nextStep() {
+            window.location.href = 'DonationHeroPanel.html';
         }
     </script>
 </body>
