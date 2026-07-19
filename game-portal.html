@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Game - Bảo Vệ Cơ Thể</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(99, 102, 241, 0.2);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .6; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="container mx-auto px-6 py-8 relative z-10">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-shield-halved text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                        BẢO VỆ CƠ THỂ
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Hệ Thống Trò Chơi Giáo Dục</p>
+                </div>
+            </div>
+            <a href="https://github.com/xuankhanh1612/bao-ve-co-the" target="_blank" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition border border-slate-700 text-sm font-semibold">
+                <i class="fa-brands fa-github text-lg"></i>
+                <span>GitHub Repo</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12 relative z-10 flex-grow flex flex-col justify-center">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-widest animate-pulse-slow">
+                Interactive Camera Control Games
+            </span>
+            <h2 class="text-4xl md:text-5xl font-extrabold mt-4 mb-6 leading-tight tracking-tight">
+                Chiến Đấu Vì <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Sức Khỏe</span> Của Bạn
+            </h2>
+            <p class="text-slate-400 text-lg leading-relaxed">
+                Trải nghiệm loạt trò chơi tương tác qua Camera độc đáo. Hãy sử dụng chuyển động của bạn để điều khiển và bảo vệ cơ thể khỏi các mối nguy hại!
+            </p>
+        </div>
+
+        <!-- Games Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto w-full">
+            
+            <!-- Game 1: Chiến Binh Bạch Cầu -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between h-full relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all duration-300"></div>
+                <div>
+                    <div class="w-14 h-14 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6 text-blue-400 text-2xl group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-viruses"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-blue-400 transition-colors duration-300">
+                        Chiến Binh Bạch Cầu
+                    </h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Hóa thân thành chiến binh Bạch Cầu dũng mãnh, tiêu diệt các vi khuẩn xâm nhập bằng xe tăng phòng vệ điều khiển bằng cử chỉ camera.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-6 text-xs text-slate-500 font-medium">
+                        <span class="px-2 py-1 rounded bg-slate-800">Camera Control</span>
+                        <span class="px-2 py-1 rounded bg-slate-800">Action</span>
+                    </div>
+                    <a href="human-tank-camera-key.html" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-center block transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/30">
+                        Chơi Ngay <i class="fa-solid fa-circle-play ml-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Game 2: Hành Trình Vaccine -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between h-full relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-300"></div>
+                <div>
+                    <div class="w-14 h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 text-indigo-400 text-2xl group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-syringe"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-indigo-400 transition-colors duration-300">
+                        Hành Trình Vaccine
+                    </h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Đồng hành cùng Vaccine vượt qua các chướng ngại vật khó khăn để kích hoạt hệ thống miễn dịch vững chắc cho cơ thể.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-6 text-xs text-slate-500 font-medium">
+                        <span class="px-2 py-1 rounded bg-slate-800">Camera Control</span>
+                        <span class="px-2 py-1 rounded bg-slate-800">Adventure</span>
+                    </div>
+                    <a href="bao-ve-co-the-camera-key.html" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-center block transition-all duration-300 hover:shadow-lg hover:shadow-indigo-600/30">
+                        Chơi Ngay <i class="fa-solid fa-circle-play ml-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Game 3: Bữa Ăn Phòng Thủ -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between h-full relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all duration-300"></div>
+                <div>
+                    <div class="w-14 h-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-6 text-emerald-400 text-2xl group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-apple-whole"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-emerald-400 transition-colors duration-300">
+                        Bữa Ăn Phòng Thủ
+                    </h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Sử dụng cơ chế bắn tọa độ sáng tạo để nạp đầy đủ dinh dưỡng, giúp cơ thể khỏe mạnh đẩy lùi mọi loại virus có hại.
+                    </p>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-6 text-xs text-slate-500 font-medium">
+                        <span class="px-2 py-1 rounded bg-slate-800">Camera Control</span>
+                        <span class="px-2 py-1 rounded bg-slate-800">Angry Birds Style</span>
+                    </div>
+                    <a href="human-camera-key-1angrybird.html" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-semibold text-center block transition-all duration-300 hover:shadow-lg hover:shadow-emerald-600/30">
+                        Chơi Ngay <i class="fa-solid fa-circle-play ml-2"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/40 py-6 mt-12 relative z-10">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+            <p>&copy; 2024 Bảo Vệ Cơ Thể. Tất cả quyền được bảo lưu.</p>
+            <div class="flex gap-6">
+                <span class="hover:text-slate-300 transition cursor-help"><i class="fa-solid fa-video mr-1"></i> Yêu cầu Camera</span>
+                <span class="hover:text-slate-300 transition cursor-help"><i class="fa-solid fa-bolt mr-1"></i> WebGL Enabled</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

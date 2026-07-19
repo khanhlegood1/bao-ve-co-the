@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Cử Chỉ Camera - Bảo Vệ Cơ Thể v3</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: linear-gradient(180deg,#1b2a3a,#0d1620);
+    color: #eef4fb;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 10px 40px;
+  }
+  h1 { font-size: 19px; margin: 4px 0 2px; text-align:center; }
+  p.sub { margin: 0 0 12px; color: #9db4c9; font-size: 13px; text-align:center; max-width: 620px; }
+
+  .stage {
+    position: relative;
+    width: min(94vw, 960px);
+    aspect-ratio: 16/9;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #2e4a63;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    background:#000;
+  }
+  canvas#output_canvas { width: 100%; height: 100%; display:block; }
+  video { display: none; }
+
+  .hud { position:absolute; top:8px; left:8px; right:8px; display:flex; justify-content:flex-start; gap:6px; pointer-events:none; flex-wrap:wrap; }
+  .pill { background: rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.15); padding:5px 10px; border-radius:999px; font-size:11.5px; backdrop-filter: blur(4px); white-space:nowrap; }
+
+  .iconBtn {
+    position:absolute; top:8px; width:34px; height:34px; border-radius:50%;
+    background: rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.2);
+    color:white; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  #settingsBtn { right: 8px; }
+  #restartBtn { right: 48px; }
+
+  .controls { margin-top: 14px; display:flex; gap:10px; flex-wrap: wrap; justify-content:center; }
+  button.main {
+    background: linear-gradient(180deg,#3fa9f5,#2477c9);
+    border: none; color: white; font-weight: 600;
+    padding: 11px 20px; border-radius: 12px; font-size: 14px;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(37,120,201,.4);
+  }
+  button.main:disabled { opacity:.5; cursor:not-allowed; }
+  button.secondary { background: linear-gradient(180deg,#414f5f,#2b3542); box-shadow:none; }
+
+  .overlay {
+    position:absolute; inset:0; background: rgba(8,14,22,.92);
+    display:flex; align-items:center; justify-content:center; z-index:10; padding:16px;
+  }
+  .card {
+    background: #16232f; border:1px solid #2e4a63; border-radius:16px;
+    padding: 20px 22px; max-width: 500px; width:100%; max-height:92%; overflow:auto;
+  }
+  .card h2 { margin:0 0 4px; font-size:17px; }
+  .card p { margin:4px 0 12px; font-size:12.5px; color:#9db4c9; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .opt {
+    flex: 1 1 120px; border:1px solid #33506a; border-radius:10px; padding:8px 10px;
+    cursor:pointer; font-size:13px; display:flex; align-items:center; gap:6px;
+    background:#1c2c3b; user-select:none;
+  }
+  .opt.selected { border-color:#3fa9f5; background:#20415c; }
+  .opt input { accent-color:#3fa9f5; }
+  .section-title { font-size:12.5px; color:#7fa6c9; margin: 10px 0 6px; text-transform:uppercase; letter-spacing:.5px; }
+  .note { font-size:11.5px; color:#7fa6c9; margin-top:6px; }
+  .hidden { display:none !important; }
+
+  .keyRow { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+  .keyField { flex:1 1 130px; background:#1c2c3b; border:1px solid #33506a; border-radius:10px; padding:8px 10px; font-size:12.5px; }
+  .keyField label { display:block; color:#8fb2ce; margin-bottom:4px; }
+  .keyField input {
+    width:100%; text-align:center; font-weight:700; font-size:14px; letter-spacing:1px;
+    background:#0f1c28; color:#7fe3ff; border:1px solid #2e4a63; border-radius:8px; padding:6px 4px; cursor:pointer;
+  }
+  .keyField input.listening { border-color:#ffd35c; color:#ffd35c; }
+</style>
+</head>
+<body>
+  <h1>🧬 Demo: Cử Chỉ Camera - Bảo Vệ Cơ Thể (v3)</h1>
+  <p class="sub">🖐️/✊ kéo &amp; bắn (đổi vai trò trong ⚙️) · ✌️ giữ chữ V = Khiên · Hoặc dùng phím vật lý: mặc định User1 <b>Q</b> kéo / <b>A</b> bắn, User2 <b>N</b> kéo / <b>M</b> bắn (đổi được trong ⚙️).</p>
+
+  <div class="stage" id="stage">
+    <video class="input_video" playsinline></video>
+    <canvas id="output_canvas" width="960" height="540"></canvas>
+
+    <div class="hud" id="hud"></div>
+
+    <div class="iconBtn" id="settingsBtn" title="Cài đặt">⚙️</div>
+    <div class="iconBtn" id="restartBtn" title="Chơi lại / Đổi chế độ">🔄</div>
+
+    <div class="overlay" id="menuOverlay">
+      <div class="card">
+        <h2>🎮 Thiết Lập Trận Chơi</h2>
+        <p>Chọn chế độ chơi và hệ cơ quan cần bảo vệ. Mỗi hệ chọn sẽ có tường máu riêng, đặt phía sau bên trái User 1.</p>
+
+        <div class="section-title">1. Chế độ chơi</div>
+        <div class="row" id="modeRow">
+          <label class="opt selected" data-mode="pve"><input type="radio" name="mode" value="pve" checked> 👤 PvE (1 người vs AI)</label>
+          <label class="opt" data-mode="coop"><input type="radio" name="mode" value="coop"> 👥 Co-op (2 người vs AI)</label>
+          <label class="opt" data-mode="pvp"><input type="radio" name="mode" value="pvp"> ⚔️ PvP (Người vs Người)</label>
+        </div>
+
+        <div class="section-title">2. Chọn hệ cơ quan cần bảo vệ (ít nhất 1)</div>
+        <div class="row" id="organRow"></div>
+        <p class="note">Chế độ PvP không có tường/boss — chỉ 2 người đấu trực tiếp.</p>
+
+        <button class="main" id="startBtn" style="width:100%">▶️ Bắt Đầu &amp; Bật Camera</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="settingsOverlay">
+      <div class="card">
+        <h2>⚙️ Cài Đặt</h2>
+        <p>Đổi vai trò xòe/nắm tay, và đổi phím vật lý điều khiển.</p>
+
+        <div class="section-title">Cử chỉ camera</div>
+        <div class="row" id="gestureRow">
+          <label class="opt selected" data-g="openDrag"><input type="radio" name="gesture" value="openDrag" checked> 🖐️ Xòe = Kéo · ✊ Nắm = Bắn</label>
+          <label class="opt" data-g="fistDrag"><input type="radio" name="gesture" value="fistDrag"> ✊ Nắm = Kéo · 🖐️ Xòe = Bắn</label>
+        </div>
+        <p class="note">✌️ Khiên (chữ V) luôn cố định, không đổi.</p>
+
+        <div class="section-title">🎹 Phím vật lý (song song với cử chỉ)</div>
+        <div class="keyRow">
+          <div class="keyField"><label>User 1 - Kéo</label><input type="text" id="key_p1_drag" data-player="p1" data-action="drag" readonly value="Q"></div>
+          <div class="keyField"><label>User 1 - Bắn</label><input type="text" id="key_p1_fire" data-player="p1" data-action="fire" readonly value="A"></div>
+          <div class="keyField"><label>User 2 - Kéo</label><input type="text" id="key_p2_drag" data-player="p2" data-action="drag" readonly value="N"></div>
+          <div class="keyField"><label>User 2 - Bắn</label><input type="text" id="key_p2_fire" data-player="p2" data-action="fire" readonly value="M"></div>
+        </div>
+        <p class="note">Nhấp vào ô rồi bấm phím muốn gán mới.</p>
+
+        <button class="main" id="saveSettingsBtn" style="width:100%">💾 Lưu &amp; Đóng</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="gameOverOverlay">
+      <div class="card" style="text-align:center">
+        <h2 id="gameOverTitle">Kết thúc</h2>
+        <p id="gameOverMsg"></p>
+        <button class="main" id="playAgainBtn" style="width:100%">🔄 Chơi Lại</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="main secondary" id="stopCamBtn" disabled>⏹️ Tắt Camera</button>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script>
+const videoEl = document.querySelector('.input_video');
+const canvas = document.getElementById('output_canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const hudEl = document.getElementById('hud');
+
+const ORGANS = {
+  than_kinh:  { emoji:'🧠', name:'Thần kinh' },
+  ho_hap:     { emoji:'🫁', name:'Hô hấp' },
+  tuan_hoan:  { emoji:'🫀', name:'Tuần hoàn' },
+  tiet_nieu:  { emoji:'💧', name:'Tiết niệu' },
+  tieu_hoa:   { emoji:'🥩', name:'Tiêu hóa' },
+  gan_mat:    { emoji:'🧫', name:'Gan mật' }
+};
+
+const organRow = document.getElementById('organRow');
+Object.entries(ORGANS).forEach(([key, o]) => {
+  const label = document.createElement('label');
+  label.className = 'opt';
+  label.dataset.organ = key;
+  label.innerHTML = `<input type="checkbox" value="${key}"> ${o.emoji} Hệ ${o.name}`;
+  organRow.appendChild(label);
+});
+
+function wireSelectable(rowEl, exclusive) {
+  rowEl.querySelectorAll('.opt').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      const input = opt.querySelector('input');
+      if (e.target !== input) { input.checked = input.type==='checkbox' ? !input.checked : true; }
+      if (exclusive) {
+        rowEl.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+      } else {
+        opt.classList.toggle('selected', input.checked);
+      }
+    });
+  });
+}
+wireSelectable(document.getElementById('modeRow'), true);
+wireSelectable(organRow, false);
+wireSelectable(document.getElementById('gestureRow'), true);
+
+let gestureMapping = 'openDrag';
+let mode = 'pve';
+let selectedOrgans = [];
+let keymap = { p1: { drag:'q', fire:'a' }, p2: { drag:'n', fire:'m' } };
+let remapTarget = null;
+
+const gravity = 0.45;
+const maxPull = 170;
+const maxPower = 26;
+const SHIELD_DRAIN = 1.3;
+const SHIELD_REGEN = 0.6;
+const KEY_CHARGE_RATE = 5;
+
+let walls = [], boss, players = [], viruses = [], bossRocks = [], running = false;
+let latestHandsForDraw = [];
+
+function makePlayer(id, x, y, hp) {
+  return {
+    id, hp, maxHp: hp,
+    anchor: { x, y },
+    ball: { x, y },
+    aiming: false, wasAiming: false,
+    shieldActive: false, shieldEnergy: 100,
+    keyDragHeld: false, keyPull: 0,
+    score: 0,
+    projectiles: []
+  };
+}
+
+function layoutWalls() {
+  const count = selectedOrgans.length;
+  const totalW = W * 0.40, startX = W * 0.05, gap = 10;
+  const rows = count > 3 ? 2 : 1;
+  const perRow = Math.ceil(count / rows);
+  const segW = (totalW - gap * (perRow - 1)) / perRow;
+  const rowH = 42, rowGap = 8;
+  walls = selectedOrgans.map((key, i) => {
+    const row = Math.floor(i / perRow), col = i % perRow;
+    return {
+      key, emoji: ORGANS[key].emoji, name: ORGANS[key].name,
+      hp: 20, maxHp: 20,
+      x: startX + col * (segW + gap), y: H * 0.10 + row * (rowH + rowGap), w: segW, h: rowH
+    };
+  });
+}
+
+function initMatch() {
+  if (mode !== 'pvp') layoutWalls(); else walls = [];
+  // Boss lệch sang phải để đường ném đá (có trọng lực) rơi vòng cung sang trái, vào khu nội tạng
+  boss = mode === 'pvp' ? null : { hp: 10, maxHp: 10, x: W*0.87, y: H*0.16, attackTimer: 0, nextAttackAt: 100 };
+  viruses = []; bossRocks = [];
+
+  // Ná đặt giữa màn hình để có đủ khoảng trống kéo tay theo mọi hướng
+  players = [ makePlayer('p1', W*0.30, H*0.55, 10) ];
+  if (mode !== 'pve') players.push(makePlayer('p2', W*0.70, H*0.55, 10));
+
+  running = true;
+  window.__matchStartTime = Date.now();
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+}
+
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function classifyGesture(lm) {
+  const wrist = lm[0];
+  const tips = [8, 12, 16, 20];
+  const mcps = [5, 9, 13, 17];
+  const ext = tips.map((t, i) => dist(lm[t], wrist) > dist(lm[mcps[i]], wrist) * 1.15);
+  const [indexExt, middleExt, ringExt, pinkyExt] = ext;
+  const openCount = ext.filter(Boolean).length;
+  if (indexExt && middleExt && !ringExt && !pinkyExt) return 'shield';
+  if (openCount >= 3) return 'open';
+  if (openCount <= 1) return 'fist';
+  return 'transition';
+}
+
+function fireFrom(player, vx, vy) {
+  player.projectiles.push({ x: player.ball.x, y: player.ball.y, vx, vy, trail: [] });
+  player.ball.x = player.anchor.x;
+  player.ball.y = player.anchor.y;
+}
+
+function attemptFire(player) {
+  const pullDist = dist(player.ball, player.anchor);
+  if (pullDist > 25) {
+    const dx = player.anchor.x - player.ball.x, dy = player.anchor.y - player.ball.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const power = Math.min(pullDist, maxPull) / maxPull * maxPower;
+    fireFrom(player, (dx/d)*power, (dy/d)*power);
+  }
+  player.aiming = false;
+  player.keyPull = 0;
+}
+
+function anyShieldActive() { return players.some(p => p.shieldActive && p.shieldEnergy > 0); }
+
+function trySpawnVirus() {
+  if (mode === 'pvp' || walls.length === 0 || viruses.length > 6) return;
+  if (Math.random() < 0.014) {
+    const target = walls[Math.floor(Math.random() * walls.length)];
+    viruses.push({
+      x: target.x + target.w/2 + (Math.random()*30-15),
+      y: H*0.02, hp: 1,
+      targetWall: target,
+      speed: 0.8 + Math.random()*0.6, wob: Math.random()*Math.PI*2
+    });
+  }
+}
+
+function bossAttack() {
+  if (!boss || boss.hp <= 0 || walls.length === 0) return;
+  boss.attackTimer += 1;
+  if (boss.attackTimer >= boss.nextAttackAt) {
+    boss.attackTimer = 0;
+    boss.nextAttackAt = 100 + Math.random()*100;
+    const target = walls[Math.floor(Math.random() * walls.length)];
+    const tx = target.x + target.w/2, ty = target.y + target.h/2;
+    const T = 60;
+    const vx = (tx - boss.x) / T;
+    const vy = (ty - boss.y) / T - 0.5*gravity*T;
+    bossRocks.push({ x: boss.x, y: boss.y, vx, vy, trail: [], targetWall: target });
+  }
+}
+
+function damageWall(wall) {
+  if (anyShieldActive()) return;
+  wall.hp = Math.max(0, wall.hp - 1);
+}
+
+function updatePhysics() {
+  if (!running) return;
+
+  players.forEach(p => {
+    if (p.shieldActive && p.shieldEnergy > 0) {
+      p.shieldEnergy = Math.max(0, p.shieldEnergy - SHIELD_DRAIN);
+      if (p.shieldEnergy <= 0) p.shieldActive = false;
+    } else {
+      p.shieldEnergy = Math.min(100, p.shieldEnergy + SHIELD_REGEN);
+    }
+    // Kéo bằng phím vật lý: giữ phím "Kéo" sẽ tăng dần lực kéo theo hướng cố định (xuống dưới anchor)
+    if (p.keyDragHeld) {
+      p.keyPull = Math.min(maxPull, p.keyPull + KEY_CHARGE_RATE);
+      p.ball.x = p.anchor.x;
+      p.ball.y = p.anchor.y + p.keyPull;
+      p.aiming = true;
+    }
+  });
+
+  trySpawnVirus();
+  bossAttack();
+
+  viruses.forEach(v => { v.wob += 0.05; v.x += Math.sin(v.wob)*0.6; v.y += v.speed; });
+  viruses = viruses.filter(v => {
+    if (v.y >= v.targetWall.y + v.targetWall.h) { damageWall(v.targetWall); return false; }
+    return true;
+  });
+
+  bossRocks.forEach(r => {
+    r.trail.push({x:r.x,y:r.y}); if (r.trail.length>12) r.trail.shift();
+    r.x += r.vx; r.y += r.vy; r.vy += gravity;
+  });
+  bossRocks = bossRocks.filter(r => {
+    if (r.y >= r.targetWall.y + r.targetWall.h) { damageWall(r.targetWall); return false; }
+    return r.y < H + 40;
+  });
+
+  players.forEach(p => {
+    p.projectiles.forEach(pr => {
+      pr.trail.push({x:pr.x,y:pr.y}); if (pr.trail.length>14) pr.trail.shift();
+      pr.x += pr.vx; pr.y += pr.vy; pr.vy += gravity;
+    });
+    p.projectiles = p.projectiles.filter(pr => pr.x>-40 && pr.x<W+40 && pr.y<H+40);
+  });
+
+  players.forEach(p => {
+    p.projectiles = p.projectiles.filter(pr => {
+      for (let i=0;i<viruses.length;i++) { if (dist(pr, viruses[i]) < 22) { viruses.splice(i,1); p.score++; return false; } }
+      for (let i=0;i<bossRocks.length;i++) { if (dist(pr, bossRocks[i]) < 20) { bossRocks.splice(i,1); p.score++; return false; } }
+      if (boss && boss.hp > 0 && dist(pr, boss) < 32) {
+        boss.hp--; p.score++;
+        if (boss.hp <= 0) setTimeout(() => { if (running) boss.hp = boss.maxHp; }, 3000);
+        return false;
+      }
+      if (mode === 'pvp') {
+        const opp = players.find(x => x.id !== p.id);
+        if (opp && dist(pr, {x:opp.anchor.x, y:opp.anchor.y-20}) < 30) {
+          if (!(opp.shieldActive && opp.shieldEnergy > 0)) {
+            opp.hp = Math.max(0, opp.hp - 2);
+            if (opp.hp <= 0) endGame(`${p.id.toUpperCase()} Thắng!`, `${opp.id.toUpperCase()} đã hết máu.`);
+          }
+          return false;
+        }
+      }
+      return true;
+    });
+  });
+
+  if (mode !== 'pvp' && walls.some(w => w.hp <= 0)) {
+    const deadNames = walls.filter(w => w.hp <= 0).map(w => w.name).join(', ');
+    endGame('Thua cuộc 💔', `Hệ cơ quan bị tổn thương nặng: ${deadNames}. Hãy thử lại!`);
+  }
+}
+
+function endGame(title, msg) {
+  running = false;
+  document.getElementById('gameOverTitle').textContent = title;
+  document.getElementById('gameOverMsg').textContent = msg;
+  document.getElementById('gameOverOverlay').classList.remove('hidden');
+  const __elapsed = window.__matchStartTime ? (Date.now() - window.__matchStartTime) / 1000 : 0;
+  const __bestScore = players && players.length ? Math.max(...players.map(p => p.score || 0)) : 0;
+  const __isWin = /thắng/i.test(title) || (typeof wall !== 'undefined' && wall && wall.hp > 0 && mode !== 'pvp');
+  reportGameResult(__isWin ? 'win' : 'lose', __bestScore, __elapsed, { title: title, mode: mode });
+}
+
+function drawEmoji(char, x, y, size=40) {
+  ctx.font = `${size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(char, x, y);
+}
+
+function drawScene(handsForDraw) {
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0e1c2b'; ctx.fillRect(0,0,W,H);
+
+  ctx.save(); ctx.scale(-1,1); ctx.translate(-W,0);
+  ctx.globalAlpha = 0.5; ctx.drawImage(videoEl, 0, 0, W, H); ctx.restore();
+  ctx.globalAlpha = 1;
+
+  const shieldUp = anyShieldActive();
+
+  walls.forEach(w => {
+    ctx.fillStyle = shieldUp ? '#2c6b8f' : (w.hp > w.maxHp*0.3 ? '#3a5a78' : '#7a3535');
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+    ctx.strokeStyle = shieldUp ? '#7fe3ff' : '#9fc4e0'; ctx.lineWidth = shieldUp ? 3 : 2;
+    ctx.strokeRect(w.x, w.y, w.w, w.h);
+    drawEmoji(w.emoji, w.x + w.w/2, w.y + w.h/2 - 6, Math.min(24, w.w*0.5));
+    ctx.font = '10px sans-serif'; ctx.fillStyle = '#dff1ff'; ctx.textAlign='center';
+    ctx.fillText(`${w.hp}/${w.maxHp}`, w.x + w.w/2, w.y + w.h - 6);
+    if (shieldUp) { ctx.font = '16px serif'; ctx.fillText('🛡️', w.x + w.w/2, w.y - 10); }
+  });
+
+  if (boss) drawEmoji(boss.hp>0 ? '🦠' : '💤', boss.x, boss.y, 54);
+  viruses.forEach(v => drawEmoji('🦠', v.x, v.y, 30));
+  bossRocks.forEach(r => {
+    r.trail.forEach((t,i)=>{ ctx.globalAlpha=i/r.trail.length*0.4; ctx.fillStyle='#ff7a7a'; ctx.beginPath(); ctx.arc(t.x,t.y,5,0,7); ctx.fill(); });
+    ctx.globalAlpha = 1; drawEmoji('🪨', r.x, r.y, 26);
+  });
+
+  players.forEach(p => {
+    if (p.shieldActive && p.shieldEnergy > 0) {
+      ctx.beginPath(); ctx.arc(p.anchor.x, p.anchor.y, 46, 0, 7);
+      ctx.fillStyle = 'rgba(80,200,255,0.25)'; ctx.fill();
+      ctx.strokeStyle = '#7fe3ff'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(p.anchor.x-16, p.anchor.y+34); ctx.lineTo(p.anchor.x-16, p.anchor.y-34);
+    ctx.moveTo(p.anchor.x+16, p.anchor.y+34); ctx.lineTo(p.anchor.x+16, p.anchor.y-34);
+    ctx.stroke();
+    ctx.strokeStyle = '#d9c48f'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(p.anchor.x-16, p.anchor.y-26); ctx.lineTo(p.ball.x, p.ball.y); ctx.lineTo(p.anchor.x+16, p.anchor.y-26);
+    ctx.stroke();
+    drawEmoji(p.id==='p1' ? '🧑‍⚕️' : '👩‍⚕️', p.anchor.x, p.anchor.y+10, 30);
+    drawEmoji('🪨', p.ball.x, p.ball.y, 34);
+    p.projectiles.forEach(pr => {
+      pr.trail.forEach((t,i)=>{ ctx.globalAlpha=i/pr.trail.length*0.5; ctx.fillStyle='#ffd35c'; ctx.beginPath(); ctx.arc(t.x,t.y,5,0,7); ctx.fill(); });
+      ctx.globalAlpha = 1; drawEmoji('🪨', pr.x, pr.y, 26);
+    });
+  });
+
+  if (handsForDraw) {
+    handsForDraw.forEach(h => {
+      ctx.fillStyle = h.owner==='p1' ? '#5ee27a' : '#5eb8ff';
+      h.landmarks.forEach(pt => { ctx.beginPath(); ctx.arc(pt.x*W, pt.y*H, 4, 0, 7); ctx.fill(); });
+    });
+  }
+
+  renderHud();
+}
+
+function renderHud() {
+  let html = '';
+  players.forEach(p => {
+    html += `<div class="pill">🛡️${p.id.toUpperCase()} máu: ${p.hp}/${p.maxHp} · 🎯${p.score} · ⚡${Math.round(p.shieldEnergy)}%</div>`;
+  });
+  if (boss) html += `<div class="pill">🦠 Boss Ung Thư: ${Math.max(boss.hp,0)}/${boss.maxHp}</div>`;
+  hudEl.innerHTML = html;
+}
+
+// ---------- Vòng lặp game (độc lập với tốc độ camera) ----------
+function gameLoop() {
+  if (running) { updatePhysics(); drawScene(latestHandsForDraw); }
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+// ---------- MediaPipe Hands: chỉ cập nhật input từ cử chỉ ----------
+const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+
+function applyHandsOptions() {
+  hands.setOptions({
+    maxNumHands: mode === 'pve' ? 1 : 2,
+    modelComplexity: 0,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.5
+  });
+}
+
+hands.onResults((results) => {
+  const handsForDraw = [];
+  players.forEach(p => p.shieldActive = false);
+
+  if (results.multiHandLandmarks) {
+    results.multiHandLandmarks.forEach(lm => {
+      const mirrored = lm.map(pt => ({ x: 1-pt.x, y: pt.y }));
+      const palm = mirrored[9];
+      const owner = (mode === 'pve') ? 'p1' : (palm.x < 0.5 ? 'p1' : 'p2');
+      const player = players.find(p => p.id === owner);
+      if (!player) return;
+      handsForDraw.push({ owner, landmarks: mirrored });
+
+      const gesture = classifyGesture(lm);
+      const handX = palm.x * W, handY = palm.y * H;
+
+      if (gesture === 'shield') {
+        if (player.shieldEnergy > 0) player.shieldActive = true;
+        player.aiming = false;
+      } else {
+        const isOpen = gesture === 'open';
+        const isFist = gesture === 'fist';
+        const dragGesture = gestureMapping === 'openDrag' ? isOpen : isFist;
+        const fireGesture = gestureMapping === 'openDrag' ? isFist : isOpen;
+
+        if (dragGesture) {
+          player.aiming = true;
+          const dx = handX - player.anchor.x, dy = handY - player.anchor.y;
+          const d = Math.hypot(dx,dy); const clamped = Math.min(d, maxPull);
+          const ang = Math.atan2(dy,dx);
+          player.ball.x = player.anchor.x + Math.cos(ang)*clamped;
+          player.ball.y = player.anchor.y + Math.sin(ang)*clamped;
+        } else if (fireGesture) {
+          if (player.wasAiming) attemptFire(player);
+          player.aiming = false;
+        }
+      }
+      player.wasAiming = player.aiming;
+    });
+  }
+
+  latestHandsForDraw = handsForDraw;
+});
+
+let camera = null;
+async function startCamera() {
+  applyHandsOptions();
+  camera = new Camera(videoEl, {
+    onFrame: async () => { await hands.send({ image: videoEl }); },
+    width: 960, height: 540
+  });
+  await camera.start();
+  document.getElementById('stopCamBtn').disabled = false;
+}
+document.getElementById('stopCamBtn').addEventListener('click', () => {
+  if (camera) camera.stop();
+  document.getElementById('stopCamBtn').disabled = true;
+});
+
+// ---------- Phím vật lý ----------
+function handleGameKeyDown(e) {
+  if (!running) return;
+  const k = e.key.toLowerCase();
+  let matched = false;
+  players.forEach(p => {
+    const km = keymap[p.id]; if (!km) return;
+    if (k === km.drag) { p.keyDragHeld = true; matched = true; }
+    else if (k === km.fire) { if (!e.repeat) attemptFire(p); matched = true; }
+  });
+  if (matched) e.preventDefault();
+}
+function handleGameKeyUp(e) {
+  const k = e.key.toLowerCase();
+  players.forEach(p => {
+    const km = keymap[p.id]; if (!km) return;
+    if (k === km.drag) p.keyDragHeld = false;
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (remapTarget) {
+    const k = e.key.toLowerCase();
+    keymap[remapTarget.player][remapTarget.action] = k;
+    const inp = document.getElementById(`key_${remapTarget.player}_${remapTarget.action}`);
+    inp.value = k.length === 1 ? k.toUpperCase() : k;
+    inp.classList.remove('listening');
+    remapTarget = null;
+    e.preventDefault();
+    return;
+  }
+  handleGameKeyDown(e);
+});
+window.addEventListener('keyup', handleGameKeyUp);
+
+document.querySelectorAll('.keyField input').forEach(inp => {
+  inp.addEventListener('click', () => {
+    document.querySelectorAll('.keyField input').forEach(i => i.classList.remove('listening'));
+    remapTarget = { player: inp.dataset.player, action: inp.dataset.action };
+    inp.classList.add('listening');
+    inp.value = '...';
+  });
+});
+
+// ---------- Menu / settings / restart ----------
+document.getElementById('startBtn').addEventListener('click', async () => {
+  mode = document.querySelector('input[name="mode"]:checked').value;
+  selectedOrgans = Array.from(organRow.querySelectorAll('input:checked')).map(i => i.value);
+  if (mode !== 'pvp' && selectedOrgans.length === 0) { alert('Hãy chọn ít nhất 1 hệ cơ quan cần bảo vệ!'); return; }
+  document.getElementById('menuOverlay').classList.add('hidden');
+  initMatch();
+  await startCamera();
+});
+
+document.getElementById('settingsBtn').addEventListener('click', () => document.getElementById('settingsOverlay').classList.remove('hidden'));
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+  gestureMapping = document.querySelector('input[name="gesture"]:checked').value;
+  document.getElementById('settingsOverlay').classList.add('hidden');
+});
+document.getElementById('restartBtn').addEventListener('click', () => {
+  running = false;
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('menuOverlay').classList.remove('hidden');
+});
+document.getElementById('playAgainBtn').addEventListener('click', () => initMatch());
+
+ctx.fillStyle = '#0e1c2b'; ctx.fillRect(0,0,W,H);
+
+    // ===== PORTAL BRIDGE (auto-injected) =====
+    window.__PORTAL_GAME_ID__ = 'gesture-battle-demo-v3';
+    window.__PORTAL_GAME_TITLE__ = 'Demo Cử Chỉ – Bảo Vệ Cơ Thể v3';
+    function reportGameResult(status, score, timeSec, meta) {
+        try {
+            window.parent.postMessage({
+                type: 'PORTAL_GAME_RESULT',
+                gameId: window.__PORTAL_GAME_ID__,
+                gameTitle: window.__PORTAL_GAME_TITLE__,
+                status: status,
+                score: Math.round(score || 0),
+                timeSec: Math.round((timeSec || 0) * 10) / 10,
+                meta: meta || null,
+                ts: Date.now()
+            }, '*');
+        } catch(e) {}
+    }
+    try { window.parent.postMessage({ type: 'PORTAL_GAME_READY', gameId: window.__PORTAL_GAME_ID__, gameTitle: window.__PORTAL_GAME_TITLE__ }, '*'); } catch(e) {}
+    // ===== END PORTAL BRIDGE =====
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Portal - Bảo Vệ Cơ Thể</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .game-card:hover {
+            transform: translateY(-8px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center text-white shadow-md">
+                        <i class="fas fa-shield-alt text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                        Bảo Vệ Cơ Thể
+                    </span>
+                </div>
+
+                <!-- User Profile & Action -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-gray-100 px-4 py-2 rounded-full">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm" id="userAvatar">
+                            U
+                        </div>
+                        <span class="text-gray-700 font-bold text-sm hidden sm:block" id="userName">Người chơi</span>
+                    </div>
+                    <button onclick="logout()" class="px-4 py-2 text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded-full transition-colors flex items-center space-x-1">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="hidden sm:inline">Đăng xuất</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Header -->
+    <header class="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 text-white py-12 px-4 shadow-inner text-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-opacity-20 bg-pattern"></div>
+        <div class="max-w-4xl mx-auto relative z-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 animate-bounce">Chào mừng bạn đến với Game Portal!</h1>
+            <p class="text-lg md:text-xl font-semibold opacity-90">Hãy cùng khám phá các thử thách thú vị và học cách bảo vệ cơ thể mỗi ngày nhé!</p>
+        </div>
+    </header>
+
+    <!-- Main Game Cards Grid -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 flex items-center space-x-3">
+                <i class="fas fa-gamepad text-emerald-500"></i>
+                <span>Danh Sách Trò Chơi</span>
+            </h2>
+            <div class="text-sm font-bold text-gray-500 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100">
+                Tổng cộng: <span class="text-blue-600 font-extrabold text-base" id="totalGames">6</span> Game
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="gamesContainer">
+            <!-- Game 1: Bảo vệ Mắt -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center relative text-white">
+                    <i class="fas fa-eye text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-yellow-400 text-gray-900 font-extrabold text-xs px-3 py-1 rounded-full uppercase">Thử Thách</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Bảo Vệ Đôi Mắt Sáng</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Học cách chăm sóc đôi mắt qua trò chơi dọn bụi, căn chỉnh khoảng cách màn hình và nhận diện đồ vật có ích!</p>
+                    </div>
+                    <button onclick="playGame('bao-ve-mat')" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 2: Bảo vệ Răng -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-red-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center relative text-white">
+                    <i class="fas fa-tooth text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-emerald-400 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase">Phổ Biến</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Hiệp Sĩ Diệt Sâu Răng</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Chải răng đúng cách, loại bỏ thức ăn ngọt độc hại và đánh bại các quái vật sâu răng nguy hiểm.</p>
+                    </div>
+                    <button onclick="playGame('bao-ve-rang')" class="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 3: Bảo vệ Hệ Tiêu Hóa -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-emerald-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center relative text-white">
+                    <i class="fas fa-apple-alt text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-yellow-400 text-gray-900 font-extrabold text-xs px-3 py-1 rounded-full uppercase">Dinh Dưỡng</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Dinh Dưỡng Khỏe Mạnh</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Phân biệt thức ăn tốt và xấu cho dạ dày. Giúp hệ tiêu hóa luôn khỏe mạnh bằng cách chọn món đúng cách.</p>
+                    </div>
+                    <button onclick="playGame('he-tieu-hoa')" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 4: Bảo vệ Hệ Hô Hấp -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-cyan-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center relative text-white">
+                    <i class="fas fa-lungs text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-indigo-500 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase">Học Tập</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Hơi Thở Trong Lành</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Đeo khẩu trang khi đi đường, bảo vệ lá phổi của bạn tránh xa khỏi bụi mịn và khói độc hại.</p>
+                    </div>
+                    <button onclick="playGame('he-ho-hap')" class="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 5: Rửa tay 6 bước -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-purple-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center relative text-white">
+                    <i class="fas fa-soap text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-pink-500 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase">Kỹ Năng</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Chiến Sĩ Diệt Vi Khuẩn</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Học thuộc lòng 6 bước rửa tay tiêu chuẩn của Bộ Y Tế qua trò chơi bấm nút theo nhịp cực sôi động.</p>
+                    </div>
+                    <button onclick="playGame('rua-tay')" class="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 6: Bảo vệ Tai - Thính Giác -->
+            <div class="game-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-amber-300 flex flex-col">
+                <div class="h-48 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center relative text-white">
+                    <i class="fas fa-volume-up text-7xl drop-shadow-lg"></i>
+                    <span class="absolute top-4 right-4 bg-red-500 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase">Mới</span>
+                </div>
+                <div class="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Âm Thanh Kỳ Diệu</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed mb-4">Nhận diện các loại âm thanh tốt cho tai, và điều chỉnh âm lượng để giữ cho thính giác luôn khỏe mạnh.</p>
+                    </div>
+                    <button onclick="playGame('bao-ve-tai')" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <span>Chơi Ngay</span>
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12 text-center text-gray-500 text-sm font-semibold">
+        <p>© 2023 - 2024 Bảo Vệ Cơ Thể. Đã đăng ký bản quyền.</p>
+    </footer>
+
+    <script>
+        // Kiểm tra đăng nhập
+        window.onload = function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const username = localStorage.getItem('username');
+
+            if (isLoggedIn !== 'true' || !username) {
+                window.location.href = 'login.html';
+            } else {
+                // Hiển thị tên người dùng
+                document.getElementById('userName').innerText = username;
+                document.getElementById('userAvatar').innerText = username.charAt(0).toUpperCase();
+            }
+        }
+
+        // Hàm Đăng xuất
+        function logout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        }
+
+        // Hàm khởi động trò chơi
+        function playGame(gameKey) {
+            alert('Bạn đang bắt đầu trò chơi: ' + gameKey + '. Trò chơi đang được phát triển và tải cấu trúc dữ liệu!');
+            // Sau này chuyển hướng tới các file game cụ thể, ví dụ: window.location.href = `games/${gameKey}/index.html`;
+        }
+    </script>
+</body>
+</html>

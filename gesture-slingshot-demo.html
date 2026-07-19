@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Cử Chỉ Camera - Ná Bắn Tê Giác</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: linear-gradient(180deg,#1b2a3a,#0d1620);
+    color: #eef4fb;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px 40px;
+  }
+  h1 { font-size: 20px; margin: 6px 0 2px; text-align:center; }
+  p.sub { margin: 0 0 14px; color: #9db4c9; font-size: 13px; text-align:center; max-width: 520px; }
+  .stage {
+    position: relative;
+    width: min(94vw, 900px);
+    aspect-ratio: 16/9;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #2e4a63;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    background:#000;
+  }
+  canvas#output_canvas { width: 100%; height: 100%; display:block; }
+  video { display: none; }
+  .hud {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between; gap: 8px;
+    pointer-events: none;
+  }
+  .pill {
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.15);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    backdrop-filter: blur(4px);
+  }
+  .controls { margin-top: 16px; display:flex; gap:10px; flex-wrap: wrap; justify-content:center; }
+  button {
+    background: linear-gradient(180deg,#3fa9f5,#2477c9);
+    border: none; color: white; font-weight: 600;
+    padding: 12px 22px; border-radius: 12px; font-size: 14px;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(37,120,201,.4);
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.secondary { background: linear-gradient(180deg,#414f5f,#2b3542); box-shadow:none; }
+  .legend {
+    margin-top: 18px; display:flex; gap:22px; flex-wrap:wrap; justify-content:center;
+    font-size: 13px; color:#b9cbdc;
+  }
+  .legend div { display:flex; align-items:center; gap:8px; }
+  .legend span.emoji { font-size: 20px; }
+  .score { position:absolute; bottom:10px; left:10px; font-size:13px; background:rgba(0,0,0,.5); padding:5px 10px; border-radius:8px; }
+</style>
+</head>
+<body>
+  <h1>🦏 Demo: Cử Chỉ Camera Điều Khiển Ná Bắn</h1>
+  <p class="sub">Xòe bàn tay để kéo ná ngắm mục tiêu, nắm tay lại để bắn — giống cơ chế kéo-thả trong Captain Khánh Game.</p>
+
+  <div class="stage">
+    <video class="input_video" playsinline></video>
+    <canvas id="output_canvas" width="960" height="540"></canvas>
+    <div class="hud">
+      <div class="pill" id="handStatus">✋ Chưa phát hiện tay</div>
+      <div class="pill" id="pullStatus">Kéo: 0%</div>
+    </div>
+    <div class="score" id="score">🎯 Trúng: 0</div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">▶️ Bật Camera Cử Chỉ</button>
+    <button id="stopBtn" class="secondary" disabled>⏹️ Tắt Camera</button>
+    <button id="submitScoreBtn" class="secondary">🏆 Nộp Điểm vào Leader Board</button>
+  </div>
+
+  <div class="legend">
+    <div><span class="emoji">🖐️</span> Xòe tay = kéo ná (ngắm)</div>
+    <div><span class="emoji">✊</span> Nắm tay = thả bắn</div>
+    <div><span class="emoji">🦏</span> Bắn trúng mục tiêu để ghi điểm</div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script>
+const videoEl = document.querySelector('.input_video');
+const canvas = document.getElementById('output_canvas');
+const ctx = canvas.getContext('2d');
+const handStatusEl = document.getElementById('handStatus');
+const pullStatusEl = document.getElementById('pullStatus');
+const scoreEl = document.getElementById('score');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+
+const W = canvas.width, H = canvas.height;
+
+// --- Game state (mô phỏng ná bắn) ---
+const anchor = { x: W * 0.20, y: H * 0.72 };
+const maxPull = 170;
+const maxPower = 26;
+const gravity = 0.45;
+
+let ball = { x: anchor.x, y: anchor.y };
+let aiming = false;      // true khi tay đang xòe và kéo
+let wasAiming = false;   // trạng thái khung hình trước, để phát hiện chuyển "xòe -> nắm"
+let projectiles = [];
+let score = 0;
+
+let targets = [];
+function spawnTarget() {
+  targets.push({
+    x: W * 0.62 + Math.random() * W * 0.32,
+    y: H * 0.25 + Math.random() * H * 0.45,
+    r: 30,
+    alive: true,
+    emoji: '🦏'
+  });
+}
+for (let i = 0; i < 4; i++) spawnTarget();
+
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+// Ước lượng độ "xòe" của bàn tay: so khoảng cách đầu ngón tay tới cổ tay
+// với khoảng cách khớp gốc ngón tới cổ tay. Ngón càng duỗi thẳng thì tỉ lệ càng > 1.
+function handOpenness(lm) {
+  const wrist = lm[0];
+  const tips = [8, 12, 16, 20];
+  const mcps = [5, 9, 13, 17];
+  let extended = 0;
+  for (let i = 0; i < tips.length; i++) {
+    const tipDist = dist(lm[tips[i]], wrist);
+    const mcpDist = dist(lm[mcps[i]], wrist);
+    if (tipDist > mcpDist * 1.15) extended++;
+  }
+  return extended / tips.length; // 0 (nắm chặt) .. 1 (xòe hết cỡ)
+}
+
+function fire(power_x, power_y) {
+  projectiles.push({ x: ball.x, y: ball.y, vx: power_x, vy: power_y, trail: [] });
+  ball.x = anchor.x;
+  ball.y = anchor.y;
+}
+
+function updatePhysics() {
+  projectiles.forEach(p => {
+    p.trail.push({ x: p.x, y: p.y });
+    if (p.trail.length > 14) p.trail.shift();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += gravity;
+  });
+  projectiles = projectiles.filter(p => p.x < W + 40 && p.y < H + 40 && p.x > -40);
+
+  targets.forEach(t => {
+    if (!t.alive) return;
+    projectiles.forEach(p => {
+      if (dist(p, t) < t.r) {
+        t.alive = false;
+        score++;
+        scoreEl.textContent = '🎯 Trúng: ' + score;
+        setTimeout(() => {
+          t.alive = true;
+          t.x = W * 0.62 + Math.random() * W * 0.32;
+          t.y = H * 0.25 + Math.random() * H * 0.45;
+        }, 1400);
+      }
+    });
+  });
+}
+
+function drawScene(mirroredLandmarks) {
+  ctx.clearRect(0, 0, W, H);
+
+  // nền
+  ctx.fillStyle = '#0e1c2b';
+  ctx.fillRect(0, 0, W, H);
+
+  // video mirror
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.translate(-W, 0);
+  ctx.globalAlpha = 0.55;
+  ctx.drawImage(videoEl, 0, 0, W, H);
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  // hai cọc ná
+  ctx.strokeStyle = '#8a5a2b';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(anchor.x - 18, anchor.y + 40);
+  ctx.lineTo(anchor.x - 18, anchor.y - 40);
+  ctx.moveTo(anchor.x + 18, anchor.y + 40);
+  ctx.lineTo(anchor.x + 18, anchor.y - 40);
+  ctx.stroke();
+
+  // dây thun
+  ctx.strokeStyle = '#d9c48f';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(anchor.x - 18, anchor.y - 30);
+  ctx.lineTo(ball.x, ball.y);
+  ctx.lineTo(anchor.x + 18, anchor.y - 30);
+  ctx.stroke();
+
+  // bóng/tê giác trong ná
+  ctx.font = '40px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🦏', ball.x, ball.y);
+
+  // đạn đang bay
+  projectiles.forEach(p => {
+    p.trail.forEach((pt, i) => {
+      ctx.globalAlpha = i / p.trail.length * 0.5;
+      ctx.fillStyle = '#ffd35c';
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.font = '30px serif';
+    ctx.fillText('🪨', p.x, p.y);
+  });
+
+  // mục tiêu
+  targets.forEach(t => {
+    if (!t.alive) return;
+    ctx.font = '46px serif';
+    ctx.fillText(t.emoji, t.x, t.y);
+  });
+
+  // landmarks bàn tay (để phản hồi trực quan)
+  if (mirroredLandmarks) {
+    ctx.fillStyle = aiming ? '#5ee27a' : '#ff6767';
+    mirroredLandmarks.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x * W, p.y * H, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+}
+
+const hands = new Hands({
+  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+hands.setOptions({
+  maxNumHands: 1,
+  modelComplexity: 0,
+  minDetectionConfidence: 0.6,
+  minTrackingConfidence: 0.5
+});
+
+hands.onResults((results) => {
+  let mirroredLandmarks = null;
+
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const lm = results.multiHandLandmarks[0];
+    mirroredLandmarks = lm.map(p => ({ x: 1 - p.x, y: p.y }));
+
+    const openness = handOpenness(lm);
+    const palm = mirroredLandmarks[9]; // gốc ngón giữa ~ tâm bàn tay
+    const handX = palm.x * W;
+    const handY = palm.y * H;
+
+    const openThreshold = 0.6;
+    const fistThreshold = 0.3;
+
+    if (openness >= openThreshold) {
+      // Xòe tay: kéo ná theo vị trí tay, giới hạn trong bán kính maxPull
+      aiming = true;
+      const dx = handX - anchor.x;
+      const dy = handY - anchor.y;
+      const d = Math.hypot(dx, dy);
+      const clamped = Math.min(d, maxPull);
+      const angle = Math.atan2(dy, dx);
+      ball.x = anchor.x + Math.cos(angle) * clamped;
+      ball.y = anchor.y + Math.sin(angle) * clamped;
+
+      handStatusEl.textContent = '🖐️ Đang xòe tay - kéo ná';
+      pullStatusEl.textContent = 'Kéo: ' + Math.round((clamped / maxPull) * 100) + '%';
+    } else if (openness <= fistThreshold) {
+      handStatusEl.textContent = '✊ Nắm tay';
+      const pullDist = dist(ball, anchor);
+      if (wasAiming && pullDist > 25) {
+        // Vừa chuyển từ xòe -> nắm và đã kéo đủ xa: BẮN
+        const dx = anchor.x - ball.x;
+        const dy = anchor.y - ball.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const power = Math.min(pullDist, maxPull) / maxPull * maxPower;
+        fire((dx / d) * power, (dy / d) * power);
+        pullStatusEl.textContent = 'Kéo: 0%';
+      }
+      aiming = false;
+    } else {
+      handStatusEl.textContent = '✋ Đang chuyển động...';
+    }
+    wasAiming = aiming;
+  } else {
+    handStatusEl.textContent = '✋ Chưa phát hiện tay';
+  }
+
+  updatePhysics();
+  drawScene(mirroredLandmarks);
+});
+
+let camera = null;
+let __demoStartTime = null;
+
+startBtn.addEventListener('click', async () => {
+  startBtn.disabled = true;
+  handStatusEl.textContent = 'Đang khởi động camera...';
+  camera = new Camera(videoEl, {
+    onFrame: async () => { await hands.send({ image: videoEl }); },
+    width: 960,
+    height: 540
+  });
+  await camera.start();
+  stopBtn.disabled = false;
+  if (!__demoStartTime) __demoStartTime = Date.now();
+});
+
+stopBtn.addEventListener('click', () => {
+  if (camera) camera.stop();
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  handStatusEl.textContent = '✋ Camera đã tắt';
+  ctx.clearRect(0, 0, W, H);
+});
+
+document.getElementById('submitScoreBtn').addEventListener('click', () => {
+  const elapsed = __demoStartTime ? (Date.now() - __demoStartTime) / 1000 : 0;
+  reportGameResult('win', score, elapsed, { mode: 'slingshot-freeplay' });
+  const btn = document.getElementById('submitScoreBtn');
+  const old = btn.textContent;
+  btn.textContent = '✅ Đã nộp điểm!';
+  setTimeout(() => { btn.textContent = old; }, 1500);
+});
+
+// Vẽ khung ban đầu trước khi bật camera
+drawScene(null);
+
+    // ===== PORTAL BRIDGE (auto-injected) =====
+    window.__PORTAL_GAME_ID__ = 'gesture-slingshot-demo';
+    window.__PORTAL_GAME_TITLE__ = 'Demo Cử Chỉ – Ná Bắn Tê Giác';
+    function reportGameResult(status, score, timeSec, meta) {
+        try {
+            window.parent.postMessage({
+                type: 'PORTAL_GAME_RESULT',
+                gameId: window.__PORTAL_GAME_ID__,
+                gameTitle: window.__PORTAL_GAME_TITLE__,
+                status: status,
+                score: Math.round(score || 0),
+                timeSec: Math.round((timeSec || 0) * 10) / 10,
+                meta: meta || null,
+                ts: Date.now()
+            }, '*');
+        } catch(e) {}
+    }
+    try { window.parent.postMessage({ type: 'PORTAL_GAME_READY', gameId: window.__PORTAL_GAME_ID__, gameTitle: window.__PORTAL_GAME_TITLE__ }, '*'); } catch(e) {}
+    // ===== END PORTAL BRIDGE =====
+</script>
+</body>
+</html>

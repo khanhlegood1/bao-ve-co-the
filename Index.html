@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảo Vệ Cơ Thể - Trợ Lý Sức Khỏe AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2a9d8f;
+            --secondary-color: #264653;
+            --accent-color: #e76f51;
+            --bg-color: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--secondary-color) !important;
+        }
+
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            background: #fdfdfd;
+            margin-bottom: 20px;
+        }
+
+        .chat-bubble {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+
+        .chat-bubble.user {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-bubble.ai {
+            background-color: #e9ecef;
+            color: #333;
+            margin-right: auto;
+        }
+
+        .btn-mic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(231, 111, 81, 0.4);
+        }
+
+        .btn-mic.recording {
+            background-color: #d62828;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(214, 40, 40, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(214, 40, 40, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(214, 40, 40, 0); }
+        }
+
+        .affiliate-box {
+            background-color: #e8f5e9;
+            border-left: 5px solid #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .avatar-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="bi bi-shield-pulse me-2"></i>Bảo Vệ Cơ Thể</a>
+            <div class="d-flex align-items-center gap-3">
+                <div id="user-profile" class="d-flex align-items-center gap-2 text-white">
+                    <!-- Sẽ được cập nhật bằng JS -->
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">Đăng xuất</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-container">
+            <h3 class="text-center mb-4 text-secondary">Hỏi Đáp Sức Khỏe AI</h3>
+            
+            <div class="chat-container" id="chat-container">
+                <div class="chat-bubble ai">Chào mừng bạn! Hãy nhấn vào nút Micro phía dưới để nói chuyện trực tiếp với trợ lý AI của Bảo Vệ Cơ Thể.</div>
+            </div>
+
+            <div class="d-flex flex-column align-items-center gap-3">
+                <button class="btn-mic" id="btn-mic" onclick="toggleSpeech()">
+                    <i class="bi bi-mic-fill"></i>
+                </button>
+                <div class="text-muted small" id="mic-status">Nhấn micro để bắt đầu nói</div>
+            </div>
+
+            <div class="affiliate-box d-none" id="affiliate-box">
+                <h5><i class="bi bi-share-fill me-2 text-success"></i>Link Giới Thiệu Của Bạn (Affiliate)</h5>
+                <p class="small text-muted mb-2">Chia sẻ link này để giới thiệu người dùng mới tham gia cộng đồng Bảo Vệ Cơ Thể:</p>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="affiliate-link" readonly>
+                    <button class="btn btn-success" onclick="copyAffiliateLink()">Copy Link</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IndexedDB & App Core Logic -->
+    <script>
+        const DB_NAME = "BaoVeCoTheDB";
+        const DB_VERSION = 1;
+        let db;
+
+        // Quy tắc tạo UUID giống ChooseUserRolePanel.jsx
+        function generateUUID() {
+            const timestamp = Date.now().toString(36);
+            const randomStr = Math.random().toString(36).substring(2, 8);
+            return `bvct-${timestamp}-${randomStr}`;
+        }
+
+        // Khởi tạo IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('users')) {
+                        db.createObjectStore('users', { keyPath: 'uuid' });
+                    }
+                    if (!db.objectStoreNames.contains('chats')) {
+                        db.createObjectStore('chats', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        // Lưu thông tin User vào IndexedDB
+        async function saveUserToDB(user) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['users'], 'readwrite');
+                const store = transaction.objectStore('users');
+                store.put(user);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+
+        // Lấy thông tin User từ IndexedDB
+        async function getUserFromDB(uuid) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['users'], 'readonly');
+                const store = transaction.objectStore('users');
+                const request = store.get(uuid);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Lưu lịch sử Chat vào IndexedDB
+        async function saveChatToDB(sender, message) {
+            const uuid = localStorage.getItem('user_uuid') || 'anonymous';
+            const chatLog = {
+                uuid: uuid,
+                sender: sender,
+                message: message,
+                timestamp: Date.now()
+            };
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['chats'], 'readwrite');
+                const store = transaction.objectStore('chats');
+                store.add(chatLog);
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+
+        // Load lịch sử Chat lên màn hình
+        async function loadChatHistory() {
+            const uuid = localStorage.getItem('user_uuid');
+            if (!uuid) return;
+
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = ''; // Clear chat cũ
+
+            const transaction = db.transaction(['chats'], 'readonly');
+            const store = transaction.objectStore('chats');
+            const request = store.openCursor();
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.value.uuid === uuid) {
+                        appendChatBubble(cursor.value.sender, cursor.value.message);
+                    }
+                    cursor.continue();
+                }
+            };
+        }
+
+        // Đẩy tin nhắn lên giao diện
+        function appendChatBubble(sender, text) {
+            const chatContainer = document.getElementById('chat-container');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}`;
+            bubble.textContent = text;
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Đăng xuất xóa session tạm thời
+        function logout() {
+            localStorage.removeItem('user_uuid');
+            window.location.href = 'ChooseUserRolePanel.html';
+        }
+
+        // Nhận diện giọng nói và tích hợp AI
+        let recognition;
+        let isRecording = false;
+
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Trình duyệt của bạn không hỗ trợ nhận diện giọng nói.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'vi-VN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('btn-mic').classList.add('recording');
+                document.getElementById('mic-status').innerText = "Đang lắng nghe...";
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('btn-mic').classList.remove('recording');
+                document.getElementById('mic-status').innerText = "Nhấn micro để tiếp tục";
+            };
+
+            recognition.onresult = async (event) => {
+                const speechToText = event.results[0][0].transcript;
+                appendChatBubble('user', speechToText);
+                
+                // Đảm bảo user luôn có UUID khi bắt đầu chat
+                let uuid = localStorage.getItem('user_uuid');
+                if (!uuid) {
+                    uuid = generateUUID();
+                    localStorage.setItem('user_uuid', uuid);
+                    await saveUserToDB({ uuid: uuid, created_at: Date.now() });
+                    updateAffiliateUI(uuid);
+                }
+
+                await saveChatToDB('user', speechToText);
+
+                // Giả lập câu trả lời từ AI (Gemini Agent)
+                setTimeout(async () => {
+                    const aiResponse = `[AI Bảo Vệ Cơ Thể] Cảm ơn bạn đã hỏi về "${speechToText}". Chúng tôi khuyên bạn nên tập luyện thể thao hàng ngày và ăn uống điều độ để bảo vệ sức khỏe thật tốt!`;
+                    appendChatBubble('ai', aiResponse);
+                    await saveChatToDB('ai', aiResponse);
+                }, 1000);
+            };
+        }
+
+        function toggleSpeech() {
+            if (!recognition) setupSpeechRecognition();
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        function updateAffiliateUI(uuid) {
+            const affiliateBox = document.getElementById('affiliate-box');
+            const affiliateLinkInput = document.getElementById('affiliate-link');
+            if (uuid) {
+                const domain = window.location.origin + window.location.pathname.replace('Index.html', '');
+                affiliateLinkInput.value = `${domain}ChooseUserRolePanel.html?ref=${uuid}`;
+                affiliateBox.classList.remove('d-none');
+            }
+        }
+
+        function copyAffiliateLink() {
+            const affiliateLinkInput = document.getElementById('affiliate-link');
+            affiliateLinkInput.select();
+            document.execCommand('copy');
+            alert('Đã copy link giới thiệu của bạn!');
+        }
+
+        // On Load Page
+        document.addEventListener("DOMContentLoaded", async () => {
+            await initDB();
+
+            // Kiểm tra tham số affiliate ref nếu có để lưu trữ
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if (ref) {
+                localStorage.setItem('referred_by', ref);
+            }
+
+            let uuid = localStorage.getItem('user_uuid');
+
+            // Luồng điều hướng chính: Nếu chưa có UUID thì bắt buộc đi từ ChooseUserRolePanel
+            if (!uuid) {
+                window.location.href = 'ChooseUserRolePanel.html';
+                return;
+            }
+
+            // Đã có UUID hợp lệ
+            updateAffiliateUI(uuid);
+            
+            // Lấy thông tin user hiển thị lên Profile navbar
+            const user = await getUserFromDB(uuid);
+            const profileDiv = document.getElementById('user-profile');
+            if (user && user.email) {
+                profileDiv.innerHTML = `
+                    <img src="${user.avatar || 'https://via.placeholder.com/40'}" class="avatar-img" alt="Avatar">
+                    <span class="small">${user.email}</span>
+                `;
+            } else {
+                profileDiv.innerHTML = `
+                    <i class="bi bi-person-circle fs-4"></i>
+                    <span class="small">Ẩn danh (${uuid.substring(0, 8)}...)</span>
+                `;
+            }
+
+            await loadChatHistory();
+        });
+    </script>
+</body>
+</html>
