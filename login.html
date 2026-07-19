@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Bảo Vệ Cơ Thể</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #6EE7B7 0%, #3B82F6 100%);
+        }
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            animation: float 8s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+    <!-- Background Bubbles -->
+    <div class="bubble w-20 h-20 top-10 left-10" style="animation-delay: 0s;"></div>
+    <div class="bubble w-32 h-32 bottom-10 right-10" style="animation-delay: 2s;"></div>
+    <div class="bubble w-16 h-16 top-1/3 right-1/4" style="animation-delay: 4s;"></div>
+    <div class="bubble w-24 h-24 bottom-1/3 left-1/5" style="animation-delay: 1s;"></div>
+
+    <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 max-w-md w-full border-4 border-white relative z-10">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-gradient-to-tr from-blue-400 to-indigo-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                <i class="fas fa-shield-alt text-white text-4xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mt-4">BẢO VỆ CƠ THỂ</h1>
+            <p class="text-gray-500 mt-1 font-semibold text-sm uppercase tracking-wider">Học Viện Sức Khỏe Nhí</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tên của bạn hoặc Email</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" id="username" required
+                        class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition-colors font-semibold"
+                        placeholder="Nhập tên đăng nhập...">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Mật khẩu</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" id="password" required
+                        class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition-colors font-semibold"
+                        placeholder="Nhập mật khẩu...">
+                </div>
+            </div>
+
+            <div class="text-right">
+                <a href="#" class="text-sm text-blue-500 hover:underline font-bold">Quên mật khẩu?</a>
+            </div>
+
+            <button type="submit"
+                class="w-full py-4 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all text-lg">
+                ĐĂNG NHẬP <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-gray-500 font-medium">
+            Chưa có tài khoản? <a href="#" class="text-emerald-500 font-bold hover:underline">Đăng ký ngay</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (username && password) {
+                // Đăng nhập giả lập thành công
+                localStorage.setItem('username', username);
+                localStorage.setItem('isLoggedIn', 'true');
+                
+                // Hiển thị thông báo thành công đẹp mắt
+                const btn = e.target.querySelector('button');
+                btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Đang đăng nhập...';
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    window.location.href = 'portal.html';
+                }, 1000);
+            }
+        });
+
+        // Kiểm tra xem đã đăng nhập chưa
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = 'portal.html';
+        }
+    </script>
+</body>
+</html>
